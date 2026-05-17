@@ -290,7 +290,7 @@ const fetchFrenchNames = async (cards) => {
   return new Map(Object.entries(cache));
 };
 
-function GlobalHeader({ totalCards, ownedCards, currentSetName }) {
+function GlobalHeader({ totalCards, ownedCards, currentSetName, onExport, onImportClick }) {
   const percentage = totalCards > 0 ? Math.round((ownedCards / totalCards) * 100) : 0;
 
   return (
@@ -308,10 +308,48 @@ function GlobalHeader({ totalCards, ownedCards, currentSetName }) {
           <h1 style={{ fontSize: "32px", fontFamily: "'Bebas Neue'", color: "#FFD700", letterSpacing: "2px" }}>
             🎴 REGISTRE DE CARTES POKÉMON
           </h1>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "14px", color: "#888", marginBottom: "5px" }}>Collection</div>
-            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FFD700" }}>
-              {ownedCards} / {totalCards}
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <button
+              onClick={onExport}
+              style={{
+                padding: "8px 16px",
+                background: "#4CAF50",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: "bold",
+                transition: "0.15s"
+              }}
+              onMouseEnter={e => e.target.style.opacity = "0.8"}
+              onMouseLeave={e => e.target.style.opacity = "1"}
+            >
+              📥 Exporter
+            </button>
+            <button
+              onClick={onImportClick}
+              style={{
+                padding: "8px 16px",
+                background: "#2196F3",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: "bold",
+                transition: "0.15s"
+              }}
+              onMouseEnter={e => e.target.style.opacity = "0.8"}
+              onMouseLeave={e => e.target.style.opacity = "1"}
+            >
+              📤 Importer
+            </button>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: "14px", color: "#888", marginBottom: "5px" }}>Collection</div>
+              <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FFD700" }}>
+                {ownedCards} / {totalCards}
+              </div>
             </div>
           </div>
         </div>
@@ -1125,6 +1163,48 @@ function PokemonRegistry() {
     setPreviewCard(null);
   }, []);
 
+  const handleExport = useCallback(() => {
+    const dataToExport = {
+      owned,
+      exportedAt: new Date().toISOString(),
+      version: "1.0"
+    };
+    const json = JSON.stringify(dataToExport, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `pokemon-collection-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [owned]);
+
+  const handleImportClick = useCallback(() => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".json";
+    fileInput.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (data.owned && typeof data.owned === "object") {
+          setOwned(data.owned);
+          saveStorageData(data.owned);
+          alert("✅ Collection importée avec succès !");
+        } else {
+          alert("❌ Format de fichier invalide");
+        }
+      } catch (e) {
+        console.error("Import error:", e);
+        alert("❌ Erreur lors de l'import du fichier");
+      }
+    };
+    fileInput.click();
+  }, [saveStorageData]);
+
   if (loadingStorage) {
     return (
       <div style={{
@@ -1149,6 +1229,8 @@ function PokemonRegistry() {
         totalCards={stats.total}
         ownedCards={stats.owned}
         currentSetName={selectedSet?.name}
+        onExport={handleExport}
+        onImportClick={handleImportClick}
       />
 
       {view === "sets" && (
