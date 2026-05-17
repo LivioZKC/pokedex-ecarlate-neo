@@ -1,6 +1,7 @@
 const { useState, useEffect, useCallback, useRef } = React;
 
 const STORAGE_KEY = "pokemon-registry-v1";
+const NOTES_KEY = "pokemon-notes-v1";
 
 const SETS = [
   // Base Era (1999-2002)
@@ -290,7 +291,7 @@ const fetchFrenchNames = async (cards) => {
   return new Map(Object.entries(cache));
 };
 
-function GlobalHeader({ totalCards, ownedCards, currentSetName, onExport, onImportClick }) {
+function GlobalHeader({ totalCards, ownedCards, currentSetName, onExport, onImportClick, onStats }) {
   const percentage = totalCards > 0 ? Math.round((ownedCards / totalCards) * 100) : 0;
 
   return (
@@ -345,6 +346,24 @@ function GlobalHeader({ totalCards, ownedCards, currentSetName, onExport, onImpo
             >
               📤 Importer
             </button>
+            <button
+              onClick={onStats}
+              style={{
+                padding: "8px 16px",
+                background: "#FF9800",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: "bold",
+                transition: "0.15s"
+              }}
+              onMouseEnter={e => e.target.style.opacity = "0.8"}
+              onMouseLeave={e => e.target.style.opacity = "1"}
+            >
+              📊 Stats
+            </button>
             <div style={{ textAlign: "right" }}>
               <div style={{ fontSize: "14px", color: "#888", marginBottom: "5px" }}>Collection</div>
               <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FFD700" }}>
@@ -378,7 +397,9 @@ function GlobalHeader({ totalCards, ownedCards, currentSetName, onExport, onImpo
   );
 }
 
-function CardModal({ card, onClose, onToggle, isOwned, frenchName }) {
+function CardModal({ card, onClose, onToggle, isOwned, frenchName, notes, onUpdateNote }) {
+  const [isEditingNotes, setIsEditingNotes] = React.useState(false);
+  const [tempNotes, setTempNotes] = React.useState(notes || {});
   if (!card) return null;
 
   const cardTypesDisplay = card.types ? (
@@ -480,6 +501,153 @@ function CardModal({ card, onClose, onToggle, isOwned, frenchName }) {
           {card.artist && <div>🎨 {card.artist}</div>}
         </div>
 
+        {/* Mes Notes */}
+        <div style={{ background: "#0D0D1A", padding: "15px", borderRadius: "8px", marginBottom: "20px", border: "1px solid #FFD700" }}>
+          <h4 style={{ fontSize: "14px", fontWeight: "bold", color: "#FFD700", marginBottom: "12px" }}>📝 Mes Notes</h4>
+
+          {!isEditingNotes && (
+            <div>
+              {notes && Object.keys(notes).length > 0 ? (
+                <div style={{ fontSize: "12px", color: "#F0F0F0" }}>
+                  {notes.condition && <div>• Condition : <strong>{notes.condition}</strong></div>}
+                  {notes.price && <div>• Prix payé : <strong>{notes.price}</strong></div>}
+                  {notes.date && <div>• Date achat : <strong>{notes.date}</strong></div>}
+                  {notes.text && <div style={{ marginTop: "8px" }}>• Notes : <em>{notes.text}</em></div>}
+                </div>
+              ) : (
+                <div style={{ fontSize: "12px", color: "#888", fontStyle: "italic" }}>Aucune note</div>
+              )}
+              <button
+                onClick={() => setIsEditingNotes(true)}
+                style={{
+                  marginTop: "10px",
+                  padding: "6px 12px",
+                  background: "#FFD700",
+                  color: "#0D0D1A",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "11px",
+                  fontWeight: "bold"
+                }}
+              >
+                ✏️ Modifier
+              </button>
+            </div>
+          )}
+
+          {isEditingNotes && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <select
+                value={tempNotes.condition || ""}
+                onChange={e => setTempNotes({ ...tempNotes, condition: e.target.value })}
+                style={{
+                  padding: "6px",
+                  background: "#16213E",
+                  border: "1px solid #FFD700",
+                  borderRadius: "4px",
+                  color: "#F0F0F0",
+                  fontSize: "12px"
+                }}
+              >
+                <option value="">État de conservation</option>
+                <option value="Excellent">Excellent</option>
+                <option value="Bon">Bon</option>
+                <option value="Usé">Usé</option>
+                <option value="Abîmé">Abîmé</option>
+              </select>
+
+              <input
+                type="text"
+                placeholder="Prix payé (ex: 12€)"
+                value={tempNotes.price || ""}
+                onChange={e => setTempNotes({ ...tempNotes, price: e.target.value })}
+                style={{
+                  padding: "6px",
+                  background: "#16213E",
+                  border: "1px solid #FFD700",
+                  borderRadius: "4px",
+                  color: "#F0F0F0",
+                  fontSize: "12px"
+                }}
+              />
+
+              <input
+                type="date"
+                value={tempNotes.date || ""}
+                onChange={e => setTempNotes({ ...tempNotes, date: e.target.value })}
+                style={{
+                  padding: "6px",
+                  background: "#16213E",
+                  border: "1px solid #FFD700",
+                  borderRadius: "4px",
+                  color: "#F0F0F0",
+                  fontSize: "12px"
+                }}
+              />
+
+              <textarea
+                placeholder="Notes personnelles..."
+                value={tempNotes.text || ""}
+                onChange={e => setTempNotes({ ...tempNotes, text: e.target.value })}
+                maxLength={200}
+                style={{
+                  padding: "6px",
+                  background: "#16213E",
+                  border: "1px solid #FFD700",
+                  borderRadius: "4px",
+                  color: "#F0F0F0",
+                  fontSize: "12px",
+                  fontFamily: "'Nunito'",
+                  resize: "vertical",
+                  minHeight: "60px"
+                }}
+              />
+
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={() => {
+                    onUpdateNote(card.id, tempNotes);
+                    setIsEditingNotes(false);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "6px",
+                    background: "#4CAF50",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "11px",
+                    fontWeight: "bold"
+                  }}
+                >
+                  ✓ Sauvegarder
+                </button>
+                <button
+                  onClick={() => {
+                    setTempNotes(notes || {});
+                    setIsEditingNotes(false);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "6px",
+                    background: "#FF5252",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "11px",
+                    fontWeight: "bold"
+                  }}
+                >
+                  ✕ Annuler
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div style={{ display: "flex", gap: "10px" }}>
           <button
             onClick={() => onToggle(card.setId, card.number)}
@@ -487,7 +655,7 @@ function CardModal({ card, onClose, onToggle, isOwned, frenchName }) {
               flex: 1,
               padding: "12px 20px",
               background: isOwned ? "#4CAF50" : "#FF5252",
-              color: "#fff",
+              color: isOwned ? "#fff" : "#fff",
               border: "none",
               borderRadius: "6px",
               cursor: "pointer",
@@ -498,7 +666,7 @@ function CardModal({ card, onClose, onToggle, isOwned, frenchName }) {
             onMouseEnter={e => e.target.style.opacity = "0.8"}
             onMouseLeave={e => e.target.style.opacity = "1"}
           >
-            {isOwned ? "✅ Possédée" : "❌ Manquante"}
+            {isOwned ? "✅ Possédée" : "❌ Marquer"}
           </button>
           <button
             onClick={onClose}
@@ -525,7 +693,7 @@ function CardModal({ card, onClose, onToggle, isOwned, frenchName }) {
   );
 }
 
-function CardItem({ card, isOwned, onToggle, onPreview, setId }) {
+function CardItem({ card, isOwned, onToggle, onPreview, setId, owned }) {
   return (
     <div
       style={{
@@ -584,27 +752,51 @@ function CardItem({ card, isOwned, onToggle, onPreview, setId }) {
             No Image
           </div>
         )}
-        {isOwned && (
-          <div
-            style={{
-              position: "absolute",
-              top: "5px",
-              right: "5px",
-              background: "#4CAF50",
-              color: "#fff",
-              width: "30px",
-              height: "30px",
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "18px",
-              fontWeight: "bold"
-            }}
-          >
-            ✓
-          </div>
-        )}
+        {(() => {
+          const status = owned && owned[setId] && owned[setId][card.number];
+          if (status === true) {
+            return (
+              <div style={{
+                position: "absolute",
+                top: "5px",
+                right: "5px",
+                background: "#4CAF50",
+                color: "#fff",
+                width: "30px",
+                height: "30px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "18px",
+                fontWeight: "bold"
+              }}>
+                ✓
+              </div>
+            );
+          } else if (status === "wish") {
+            return (
+              <div style={{
+                position: "absolute",
+                top: "5px",
+                right: "5px",
+                background: "#FFC107",
+                color: "#000",
+                width: "30px",
+                height: "30px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "18px",
+                fontWeight: "bold"
+              }}>
+                ⭐
+              </div>
+            );
+          }
+          return null;
+        })()}
       </div>
 
       <div style={{ padding: "12px" }}>
@@ -652,8 +844,16 @@ function CardItem({ card, isOwned, onToggle, onPreview, setId }) {
           style={{
             width: "100%",
             padding: "8px",
-            background: isOwned ? "#4CAF50" : "#FF5252",
-            color: "#fff",
+            background: (() => {
+              const status = owned && owned[setId] && owned[setId][card.number];
+              if (status === true) return "#4CAF50";
+              if (status === "wish") return "#FFC107";
+              return "#FF5252";
+            })(),
+            color: (() => {
+              const status = owned && owned[setId] && owned[setId][card.number];
+              return status === "wish" ? "#000" : "#fff";
+            })(),
             border: "none",
             borderRadius: "4px",
             cursor: "pointer",
@@ -664,7 +864,12 @@ function CardItem({ card, isOwned, onToggle, onPreview, setId }) {
           onMouseEnter={e => e.target.style.opacity = "0.8"}
           onMouseLeave={e => e.target.style.opacity = "1"}
         >
-          {isOwned ? "✅ Possédée" : "Marquer"}
+          {(() => {
+            const status = owned && owned[setId] && owned[setId][card.number];
+            if (status === true) return "✅ Possédée";
+            if (status === "wish") return "⭐ Wishlist";
+            return "Marquer";
+          })()}
         </button>
       </div>
     </div>
@@ -672,16 +877,24 @@ function CardItem({ card, isOwned, onToggle, onPreview, setId }) {
 }
 
 function CardsView({ selectedSet, cards, owned, search, filterOwned, onBack, onToggle, onPreview, loadingCards, onSearchChange, onFilterChange, frenchNames }) {
+  const [filterType, setFilterType] = React.useState("all");
+  const [filterRarity, setFilterRarity] = React.useState("all");
+  const [sortBy, setSortBy] = React.useState("number");
+  const [showAdvancedFilters, setShowAdvancedFilters] = React.useState(false);
+
   const setId = selectedSet.id;
   const ownedInSet = owned[setId] || {};
 
   const normalizedSearch = normalize(search);
 
   let filteredCards = cards.filter(card => {
-    const cardOwned = !!ownedInSet[card.number];
+    const cardStatus = ownedInSet[card.number]; // undefined | "wish" | true
+    const isOwned = cardStatus === true;
+    const isWish = cardStatus === "wish";
 
-    if (filterOwned === "owned" && !cardOwned) return false;
-    if (filterOwned === "missing" && cardOwned) return false;
+    if (filterOwned === "owned" && !isOwned) return false;
+    if (filterOwned === "missing" && (isOwned || isWish)) return false;
+    if (filterOwned === "wishlist" && !isWish) return false;
 
     if (normalizedSearch) {
       const cardNameNorm = normalize(card.name);
@@ -692,7 +905,37 @@ function CardsView({ selectedSet, cards, owned, search, filterOwned, onBack, onT
       if (!matchName && !matchNumber) return false;
     }
 
+    if (filterType !== "all" && (!card.types || !card.types.includes(filterType))) return false;
+    if (filterRarity !== "all" && card.rarity !== filterRarity) return false;
+
     return true;
+  });
+
+  // Extraire types et raretés uniques
+  const uniqueTypes = Array.from(new Set(cards.flatMap(c => c.types || [])));
+  const uniqueRarities = Array.from(new Set(cards.map(c => c.rarity).filter(Boolean)));
+
+  // Tri
+  filteredCards = [...filteredCards].sort((a, b) => {
+    if (sortBy === "number") {
+      const numA = parseInt(a.number) || 0;
+      const numB = parseInt(b.number) || 0;
+      if (numA && numB) return numA - numB;
+      return String(a.number).localeCompare(String(b.number));
+    } else if (sortBy === "name") {
+      const nameA = (a.frenchName || a.name).toLowerCase();
+      const nameB = (b.frenchName || b.name).toLowerCase();
+      return nameA.localeCompare(nameB);
+    } else if (sortBy === "rarity") {
+      const rarityA = a.rarity || "";
+      const rarityB = b.rarity || "";
+      return rarityA.localeCompare(rarityB);
+    } else if (sortBy === "hp") {
+      const hpA = parseInt(a.hp) || 0;
+      const hpB = parseInt(b.hp) || 0;
+      return hpB - hpA; // Décroissant (HP élevés en premier)
+    }
+    return 0;
   });
 
   const ownedCount = Object.values(ownedInSet).filter(Boolean).length;
@@ -810,6 +1053,121 @@ function CardsView({ selectedSet, cards, owned, search, filterOwned, onBack, onT
             >
               ❌ Manquantes
             </button>
+            <button
+              onClick={() => onFilterChange("wishlist")}
+              style={{
+                padding: "8px 16px",
+                background: filterOwned === "wishlist" ? "#FFC107" : "#16213E",
+                color: filterOwned === "wishlist" ? "#000" : "#FFC107",
+                border: "1px solid #FFC107",
+                borderRadius: "20px",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: "bold",
+                transition: "0.15s"
+              }}
+            >
+              ⭐ Wishlist
+            </button>
+          </div>
+
+          {/* Panneau Filtres Avancés */}
+          <div style={{ marginTop: "15px" }}>
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              style={{
+                padding: "8px 16px",
+                background: "#16213E",
+                color: "#FFD700",
+                border: "1px solid #FFD700",
+                borderRadius: "20px",
+                cursor: "pointer",
+                fontSize: "12px",
+                fontWeight: "bold",
+                transition: "0.15s"
+              }}
+              onMouseEnter={e => e.target.style.background = "#1A1A2E"}
+              onMouseLeave={e => e.target.style.background = "#16213E"}
+            >
+              ⚙️ {showAdvancedFilters ? "Masquer" : "Filtres avancés"}
+            </button>
+
+            {showAdvancedFilters && (
+              <div style={{ marginTop: "12px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "11px", color: "#888", display: "block", marginBottom: "4px" }}>Type Pokémon</label>
+                  <select
+                    value={filterType}
+                    onChange={e => setFilterType(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "6px",
+                      background: "#0D0D1A",
+                      border: "1px solid #FFD700",
+                      borderRadius: "4px",
+                      color: "#F0F0F0",
+                      fontSize: "12px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    <option value="all">Tous</option>
+                    {uniqueTypes.map(type => (
+                      <option key={type} value={type}>
+                        {TYPE_NAMES_FR[type] || type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: "11px", color: "#888", display: "block", marginBottom: "4px" }}>Rareté</label>
+                  <select
+                    value={filterRarity}
+                    onChange={e => setFilterRarity(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "6px",
+                      background: "#0D0D1A",
+                      border: "1px solid #FFD700",
+                      borderRadius: "4px",
+                      color: "#F0F0F0",
+                      fontSize: "12px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    <option value="all">Tous</option>
+                    {uniqueRarities.map(rarity => (
+                      <option key={rarity} value={rarity}>
+                        {RARITY_NAMES_FR[rarity] || rarity}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: "11px", color: "#888", display: "block", marginBottom: "4px" }}>Trier par</label>
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "6px",
+                      background: "#0D0D1A",
+                      border: "1px solid #FFD700",
+                      borderRadius: "4px",
+                      color: "#F0F0F0",
+                      fontSize: "12px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    <option value="number">Numéro</option>
+                    <option value="name">Nom</option>
+                    <option value="rarity">Rareté</option>
+                    <option value="hp">PV (décroissant)</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -844,6 +1202,7 @@ function CardsView({ selectedSet, cards, owned, search, filterOwned, onBack, onT
                   onToggle={onToggle}
                   onPreview={onPreview}
                   setId={setId}
+                  owned={owned}
                 />
               );
             })}
@@ -914,6 +1273,144 @@ function SetCard({ set, owned, onOpen }) {
 
       <div style={{ fontSize: "12px", color: "#888", textAlign: "center" }}>
         {ownedCount} / {set.total}
+      </div>
+    </div>
+  );
+}
+
+function StatsView({ owned, onBack }) {
+  const stats = { total: 0, ownedCount: 0, wishCount: 0 };
+  const statsByEra = {};
+
+  SETS.forEach(set => {
+    stats.total += set.total;
+    const setOwned = owned[set.id] || {};
+    const ownedInSet = Object.values(setOwned).filter(v => v === true).length;
+    const wishInSet = Object.values(setOwned).filter(v => v === "wish").length;
+    stats.ownedCount += ownedInSet;
+    stats.wishCount += wishInSet;
+
+    if (!statsByEra[set.era]) statsByEra[set.era] = { total: 0, owned: 0, wish: 0 };
+    statsByEra[set.era].total += set.total;
+    statsByEra[set.era].owned += ownedInSet;
+    statsByEra[set.era].wish += wishInSet;
+  });
+
+  const percentage = stats.total > 0 ? Math.round((stats.ownedCount / stats.total) * 100) : 0;
+
+  // Top 5 les plus complètes
+  const sortedSets = SETS.map(set => {
+    const setOwned = owned[set.id] || {};
+    const ownedCount = Object.values(setOwned).filter(v => v === true).length;
+    const pct = Math.round((ownedCount / set.total) * 100);
+    return { ...set, ownedCount, percentage: pct };
+  }).sort((a, b) => b.percentage - a.percentage);
+
+  const top5Complete = sortedSets.slice(0, 5);
+  const top5Missing = sortedSets.slice(-5).reverse();
+
+  const globalPercentage = stats.total > 0 ? Math.round((stats.ownedCount / stats.total) * 100) : 0;
+
+  return (
+    <div style={{ padding: "30px", maxWidth: "1400px", margin: "0 auto", minHeight: "90vh" }}>
+      <button
+        onClick={onBack}
+        style={{
+          marginBottom: "20px",
+          padding: "8px 16px",
+          background: "#16213E",
+          color: "#FFD700",
+          border: "1px solid #FFD700",
+          borderRadius: "6px",
+          cursor: "pointer",
+          fontSize: "12px",
+          fontWeight: "bold"
+        }}
+      >
+        ← Retour
+      </button>
+
+      <h1 style={{ fontSize: "32px", fontFamily: "'Bebas Neue'", color: "#FFD700", marginBottom: "30px" }}>📊 STATISTIQUES</h1>
+
+      {/* Bloc Global */}
+      <div style={{ background: "#16213E", padding: "20px", borderRadius: "8px", marginBottom: "30px", border: "1px solid #FFD700" }}>
+        <div style={{ fontSize: "14px", color: "#888", marginBottom: "15px" }}>Collection Globale</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "15px", marginBottom: "20px" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#4CAF50" }}>{stats.ownedCount}</div>
+            <div style={{ fontSize: "12px", color: "#888" }}>Possédées</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FFC107" }}>{stats.wishCount}</div>
+            <div style={{ fontSize: "12px", color: "#888" }}>Wishlist</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FFD700" }}>{stats.total}</div>
+            <div style={{ fontSize: "12px", color: "#888" }}>Total</div>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FFD700" }}>{globalPercentage}%</div>
+            <div style={{ fontSize: "12px", color: "#888" }}>Complétée</div>
+          </div>
+        </div>
+        <div style={{ background: "#0D0D1A", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
+          <div style={{ width: `${globalPercentage}%`, height: "100%", background: "linear-gradient(90deg, #4CAF50, #FFD700)", transition: "width 0.3s" }} />
+        </div>
+      </div>
+
+      {/* Stats par Ère */}
+      <h2 style={{ fontSize: "20px", fontFamily: "'Bebas Neue'", color: "#FFD700", marginBottom: "15px" }}>📈 Progression par Ère</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "15px", marginBottom: "30px" }}>
+        {ERA_ORDER.map(era => {
+          const eraStats = statsByEra[era] || { total: 0, owned: 0, wish: 0 };
+          const eraPct = eraStats.total > 0 ? Math.round((eraStats.owned / eraStats.total) * 100) : 0;
+          return (
+            <div key={era} style={{ background: "#16213E", padding: "15px", borderRadius: "8px", border: `1px solid ${ERA_COLORS[era]}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                <div style={{ fontSize: "13px", fontWeight: "bold", color: ERA_COLORS[era] }}>{ERA_NAMES_FR[era] || era}</div>
+                <div style={{ fontSize: "12px", color: "#888" }}>{eraPct}%</div>
+              </div>
+              <div style={{ background: "#0D0D1A", height: "6px", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
+                <div style={{ width: `${eraPct}%`, height: "100%", background: ERA_COLORS[era], transition: "width 0.3s" }} />
+              </div>
+              <div style={{ fontSize: "11px", color: "#888", textAlign: "center" }}>
+                {eraStats.owned} / {eraStats.total} ({eraStats.wish} ⭐)
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Top 5 */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "30px" }}>
+        <div>
+          <h3 style={{ fontSize: "16px", fontFamily: "'Bebas Neue'", color: "#4CAF50", marginBottom: "15px" }}>🏆 Top 5 les Plus Complètes</h3>
+          {top5Complete.map((set, idx) => (
+            <div key={set.id} style={{ background: "#16213E", padding: "12px", marginBottom: "10px", borderRadius: "6px", border: "1px solid #4CAF50" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                <div style={{ fontSize: "12px", fontWeight: "bold", color: "#F0F0F0" }}>#{idx + 1} {set.name_fr || set.name}</div>
+                <div style={{ fontSize: "12px", color: "#4CAF50", fontWeight: "bold" }}>{set.percentage}%</div>
+              </div>
+              <div style={{ background: "#0D0D1A", height: "4px", borderRadius: "2px", overflow: "hidden" }}>
+                <div style={{ width: `${set.percentage}%`, height: "100%", background: "#4CAF50" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div>
+          <h3 style={{ fontSize: "16px", fontFamily: "'Bebas Neue'", color: "#FF5252", marginBottom: "15px" }}>📉 Top 5 à Completer</h3>
+          {top5Missing.map((set, idx) => (
+            <div key={set.id} style={{ background: "#16213E", padding: "12px", marginBottom: "10px", borderRadius: "6px", border: "1px solid #FF5252" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                <div style={{ fontSize: "12px", fontWeight: "bold", color: "#F0F0F0" }}>#{idx + 1} {set.name_fr || set.name}</div>
+                <div style={{ fontSize: "12px", color: "#FF5252", fontWeight: "bold" }}>{set.percentage}%</div>
+              </div>
+              <div style={{ background: "#0D0D1A", height: "4px", borderRadius: "2px", overflow: "hidden" }}>
+                <div style={{ width: `${set.percentage}%`, height: "100%", background: "#FF5252" }} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -1017,6 +1514,7 @@ function PokemonRegistry() {
   const [previewCard, setPreviewCard] = useState(null);
   const [loadingStorage, setLoadingStorage] = useState(true);
   const [frenchNames, setFrenchNames] = useState(new Map());
+  const [notes, setNotes] = useState({});
   const debounceRef = useRef(null);
 
   const calculateStats = useCallback(() => {
@@ -1036,6 +1534,10 @@ function PokemonRegistry() {
       const rawData = window.storage?.getItem?.(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY);
       const data = rawData ? JSON.parse(rawData) : {};
       setOwned(data);
+
+      const rawNotes = localStorage.getItem(NOTES_KEY);
+      const notesData = rawNotes ? JSON.parse(rawNotes) : {};
+      setNotes(notesData);
     } catch (e) {
       console.error("Failed to load storage:", e);
     } finally {
@@ -1063,12 +1565,15 @@ function PokemonRegistry() {
     }, 800);
   }, [saveStorageData]);
 
-  const toggleCard = useCallback((setId, cardNumber) => {
+  const cycleCardStatus = useCallback((setId, cardNumber) => {
     setOwned(prev => {
       const newOwned = { ...prev };
       if (!newOwned[setId]) newOwned[setId] = {};
       newOwned[setId] = { ...newOwned[setId] };
-      newOwned[setId][cardNumber] = !newOwned[setId][cardNumber];
+      const current = newOwned[setId][cardNumber];
+      // Cycle: undefined/false → "wish" → true → undefined
+      const next = current === true ? undefined : current === "wish" ? true : "wish";
+      newOwned[setId][cardNumber] = next;
       debouncedSave(newOwned);
       return newOwned;
     });
@@ -1205,6 +1710,24 @@ function PokemonRegistry() {
     fileInput.click();
   }, [saveStorageData]);
 
+  const handleUpdateNote = useCallback((cardId, noteData) => {
+    const newNotes = { ...notes, [cardId]: noteData };
+    setNotes(newNotes);
+    try {
+      localStorage.setItem(NOTES_KEY, JSON.stringify(newNotes));
+    } catch (e) {
+      console.error("Failed to save notes:", e);
+    }
+  }, [notes]);
+
+  const handleStatsView = useCallback(() => {
+    setView("stats");
+  }, []);
+
+  const handleBackToSets = useCallback(() => {
+    setView("sets");
+  }, []);
+
   if (loadingStorage) {
     return (
       <div style={{
@@ -1231,6 +1754,7 @@ function PokemonRegistry() {
         currentSetName={selectedSet?.name}
         onExport={handleExport}
         onImportClick={handleImportClick}
+        onStats={handleStatsView}
       />
 
       {view === "sets" && (
@@ -1251,12 +1775,19 @@ function PokemonRegistry() {
           search={search}
           filterOwned={filterOwned}
           onBack={closeSet}
-          onToggle={toggleCard}
+          onToggle={cycleCardStatus}
           onPreview={handlePreviewCard}
           loadingCards={loadingCards}
           onSearchChange={handleSearchChange}
           onFilterChange={handleFilterChange}
           frenchNames={frenchNames}
+        />
+      )}
+
+      {view === "stats" && (
+        <StatsView
+          owned={owned}
+          onBack={handleBackToSets}
         />
       )}
 
@@ -1267,9 +1798,11 @@ function PokemonRegistry() {
           <CardModal
             card={previewCard}
             onClose={handleCloseModal}
-            onToggle={toggleCard}
+            onToggle={cycleCardStatus}
             isOwned={!!owned[previewCard.setId]?.[previewCard.number]}
             frenchName={frenchName}
+            notes={notes[previewCard.id]}
+            onUpdateNote={handleUpdateNote}
           />
         );
       })()}
