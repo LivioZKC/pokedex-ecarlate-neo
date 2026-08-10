@@ -3,6 +3,16 @@ import { supabase } from './supabase.js';
 
 const FR_NAMES_CACHE_KEY = "pokeapi-fr-names-v1";
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return isMobile;
+}
+
 const SETS = [
   // Base Era (1999-2002)
   { id: "base1", name: "Base", name_fr: "Édition de Base", year: 1999, era: "Base", total: 102 },
@@ -331,12 +341,26 @@ function LoginScreen({ onLogin, error }) {
 }
 
 function GlobalHeader({ totalCards, ownedCards, currentSetName, onExport, onImportClick, onStats, onLogout }) {
+  const isMobile = useIsMobile();
   const percentage = totalCards > 0 ? Math.round((ownedCards / totalCards) * 100) : 0;
+
+  const btnStyle = (bg) => ({
+    padding: isMobile ? "9px 11px" : "8px 16px",
+    background: bg,
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: isMobile ? "16px" : "12px",
+    fontWeight: "bold",
+    transition: "0.15s",
+    lineHeight: 1
+  });
 
   return (
     <div style={{
       background: "linear-gradient(135deg, #16213E 0%, #0D0D1A 100%)",
-      padding: "20px 30px",
+      padding: isMobile ? "10px 14px" : "20px 30px",
       borderBottom: "2px solid #FFD700",
       position: "sticky",
       top: 0,
@@ -344,107 +368,42 @@ function GlobalHeader({ totalCards, ownedCards, currentSetName, onExport, onImpo
       backdropFilter: "blur(10px)"
     }}>
       <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-          <h1 style={{ fontSize: "32px", fontFamily: "'Bebas Neue'", color: "#FFD700", letterSpacing: "2px" }}>
-            🎴 REGISTRE DE CARTES POKÉMON
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: isMobile ? "8px" : "15px" }}>
+          <h1 style={{ fontSize: isMobile ? "18px" : "32px", fontFamily: "'Bebas Neue'", color: "#FFD700", letterSpacing: "2px" }}>
+            {isMobile ? "🎴 POKÉDEX" : "🎴 REGISTRE DE CARTES POKÉMON"}
           </h1>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            <button
-              onClick={onExport}
-              style={{
-                padding: "8px 16px",
-                background: "#4CAF50",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
-                transition: "0.15s"
-              }}
-              onMouseEnter={e => e.target.style.opacity = "0.8"}
-              onMouseLeave={e => e.target.style.opacity = "1"}
-            >
-              📥 Exporter
+          <div style={{ display: "flex", gap: isMobile ? "6px" : "10px", alignItems: "center" }}>
+            <button onClick={onExport} style={btnStyle("#4CAF50")} title="Exporter">
+              {isMobile ? "📥" : "📥 Exporter"}
             </button>
-            <button
-              onClick={onImportClick}
-              style={{
-                padding: "8px 16px",
-                background: "#2196F3",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
-                transition: "0.15s"
-              }}
-              onMouseEnter={e => e.target.style.opacity = "0.8"}
-              onMouseLeave={e => e.target.style.opacity = "1"}
-            >
-              📤 Importer
+            <button onClick={onImportClick} style={btnStyle("#2196F3")} title="Importer">
+              {isMobile ? "📤" : "📤 Importer"}
             </button>
-            <button
-              onClick={onStats}
-              style={{
-                padding: "8px 16px",
-                background: "#FF9800",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
-                transition: "0.15s"
-              }}
-              onMouseEnter={e => e.target.style.opacity = "0.8"}
-              onMouseLeave={e => e.target.style.opacity = "1"}
-            >
-              📊 Stats
+            <button onClick={onStats} style={btnStyle("#FF9800")} title="Stats">
+              {isMobile ? "📊" : "📊 Stats"}
             </button>
-            <button
-              onClick={onLogout}
-              style={{
-                padding: "8px 16px",
-                background: "#555",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
-                transition: "0.15s"
-              }}
-              onMouseEnter={e => e.target.style.opacity = "0.8"}
-              onMouseLeave={e => e.target.style.opacity = "1"}
-            >
-              🚪 Déconnexion
+            <button onClick={onLogout} style={btnStyle("#555")} title="Déconnexion">
+              {isMobile ? "🚪" : "🚪 Déconnexion"}
             </button>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "14px", color: "#888", marginBottom: "5px" }}>Collection</div>
-              <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FFD700" }}>
-                {ownedCards} / {totalCards}
+            {!isMobile && (
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: "14px", color: "#888", marginBottom: "5px" }}>Collection</div>
+                <div style={{ fontSize: "24px", fontWeight: "bold", color: "#FFD700" }}>
+                  {ownedCards} / {totalCards}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-          <div style={{ flex: 1, background: "#1A1A2E", height: "8px", borderRadius: "4px", overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${percentage}%`,
-                height: "100%",
-                background: `linear-gradient(90deg, #4CAF50, #FFD700)`,
-                transition: "width 0.3s ease"
-              }}
-            />
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ flex: 1, background: "#1A1A2E", height: isMobile ? "5px" : "8px", borderRadius: "4px", overflow: "hidden" }}>
+            <div style={{ width: `${percentage}%`, height: "100%", background: "linear-gradient(90deg, #4CAF50, #FFD700)", transition: "width 0.3s ease" }} />
           </div>
-          <div style={{ fontSize: "13px", color: "#FFD700", fontWeight: "bold", minWidth: "50px", textAlign: "right" }}>
-            {percentage}%
+          <div style={{ fontSize: "12px", color: "#FFD700", fontWeight: "bold", whiteSpace: "nowrap" }}>
+            {isMobile ? `${ownedCards}/${totalCards}` : `${percentage}%`}
           </div>
         </div>
-        {currentSetName && (
+        {currentSetName && !isMobile && (
           <div style={{ fontSize: "12px", color: "#888", marginTop: "10px" }}>
             📍 {currentSetName}
           </div>
@@ -455,6 +414,7 @@ function GlobalHeader({ totalCards, ownedCards, currentSetName, onExport, onImpo
 }
 
 function CardModal({ card, onClose, onToggle, isOwned, frenchName, notes, onUpdateNote }) {
+  const isMobile = useIsMobile();
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [tempNotes, setTempNotes] = useState(notes || {});
   if (!card) return null;
@@ -488,22 +448,23 @@ function CardModal({ card, onClose, onToggle, isOwned, frenchName, notes, onUpda
         background: "rgba(0, 0, 0, 0.85)",
         backdropFilter: "blur(10px)",
         display: "flex",
-        alignItems: "center",
+        alignItems: isMobile ? "flex-end" : "center",
         justifyContent: "center",
         zIndex: 999,
-        padding: "20px"
+        padding: isMobile ? "0" : "20px"
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
           background: "#16213E",
-          borderRadius: "12px",
-          padding: "30px",
-          maxWidth: "450px",
+          borderRadius: isMobile ? "16px 16px 0 0" : "12px",
+          padding: isMobile ? "16px 14px 24px" : "30px",
+          maxWidth: isMobile ? "100%" : "450px",
           width: "100%",
           border: "1px solid #FFD700",
-          maxHeight: "90vh",
+          borderBottom: isMobile ? "none" : "1px solid #FFD700",
+          maxHeight: "92vh",
           overflowY: "auto"
         }}
       >
@@ -934,6 +895,7 @@ function CardItem({ card, isOwned, onToggle, onPreview, setId, owned }) {
 }
 
 function CardsView({ selectedSet, cards, owned, search, filterOwned, onBack, onToggle, onPreview, loadingCards, onSearchChange, onFilterChange, frenchNames }) {
+  const isMobile = useIsMobile();
   const [filterType, setFilterType] = useState("all");
   const [filterRarity, setFilterRarity] = useState("all");
   const [sortBy, setSortBy] = useState("number");
@@ -1001,43 +963,36 @@ function CardsView({ selectedSet, cards, owned, search, filterOwned, onBack, onT
     <div>
       <div style={{
         background: "#16213E",
-        padding: "20px 30px",
+        padding: isMobile ? "10px 12px" : "20px 30px",
         borderBottom: "1px solid #FFD700",
         position: "sticky",
-        top: "100px",
+        top: isMobile ? "60px" : "100px",
         zIndex: 5
       }}>
         <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "15px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "8px" : "15px", marginBottom: isMobile ? "8px" : "15px" }}>
             <button
               onClick={onBack}
               style={{
                 background: "transparent",
                 border: "1px solid #FFD700",
                 color: "#FFD700",
-                padding: "8px 12px",
+                padding: isMobile ? "6px 10px" : "8px 12px",
                 borderRadius: "4px",
                 cursor: "pointer",
-                fontSize: "16px",
+                fontSize: isMobile ? "14px" : "16px",
                 fontWeight: "bold",
-                transition: "0.15s"
-              }}
-              onMouseEnter={e => {
-                e.target.style.background = "#FFD700";
-                e.target.style.color = "#0D0D1A";
-              }}
-              onMouseLeave={e => {
-                e.target.style.background = "transparent";
-                e.target.style.color = "#FFD700";
+                transition: "0.15s",
+                flexShrink: 0
               }}
             >
-              ← Retour
+              ← {isMobile ? "" : "Retour"}
             </button>
-            <h2 style={{ fontSize: "24px", fontFamily: "'Bebas Neue'", color: "#FFD700" }}>
-              {selectedSet.name_fr || selectedSet.name} ({selectedSet.year})
+            <h2 style={{ fontSize: isMobile ? "15px" : "24px", fontFamily: "'Bebas Neue'", color: "#FFD700", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {selectedSet.name_fr || selectedSet.name} {isMobile ? "" : `(${selectedSet.year})`}
             </h2>
-            <div style={{ marginLeft: "auto", fontSize: "12px", color: "#888" }}>
-              {ownedCount} / {selectedSet.total} cartes
+            <div style={{ marginLeft: "auto", fontSize: "11px", color: "#888", flexShrink: 0 }}>
+              {ownedCount}/{selectedSet.total}
             </div>
           </div>
 
@@ -1061,71 +1016,31 @@ function CardsView({ selectedSet, cards, owned, search, filterOwned, onBack, onT
             }}
           />
 
-          <div style={{ display: "flex", gap: "10px", marginTop: "15px", flexWrap: "wrap" }}>
-            <button
-              onClick={() => onFilterChange("all")}
-              style={{
-                padding: "8px 16px",
-                background: filterOwned === "all" ? "#FFD700" : "#16213E",
-                color: filterOwned === "all" ? "#0D0D1A" : "#FFD700",
-                border: "1px solid #FFD700",
-                borderRadius: "20px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
-                transition: "0.15s"
-              }}
-            >
-              🎴 Toutes
-            </button>
-            <button
-              onClick={() => onFilterChange("owned")}
-              style={{
-                padding: "8px 16px",
-                background: filterOwned === "owned" ? "#4CAF50" : "#16213E",
-                color: filterOwned === "owned" ? "#fff" : "#4CAF50",
-                border: "1px solid #4CAF50",
-                borderRadius: "20px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
-                transition: "0.15s"
-              }}
-            >
-              ✅ Possédées
-            </button>
-            <button
-              onClick={() => onFilterChange("missing")}
-              style={{
-                padding: "8px 16px",
-                background: filterOwned === "missing" ? "#FF5252" : "#16213E",
-                color: filterOwned === "missing" ? "#fff" : "#FF5252",
-                border: "1px solid #FF5252",
-                borderRadius: "20px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
-                transition: "0.15s"
-              }}
-            >
-              ❌ Manquantes
-            </button>
-            <button
-              onClick={() => onFilterChange("wishlist")}
-              style={{
-                padding: "8px 16px",
-                background: filterOwned === "wishlist" ? "#FFC107" : "#16213E",
-                color: filterOwned === "wishlist" ? "#000" : "#FFC107",
-                border: "1px solid #FFC107",
-                borderRadius: "20px",
-                cursor: "pointer",
-                fontSize: "12px",
-                fontWeight: "bold",
-                transition: "0.15s"
-              }}
-            >
-              ⭐ Wishlist
-            </button>
+          <div style={{ display: "flex", gap: "6px", marginTop: isMobile ? "8px" : "15px", flexWrap: isMobile ? "nowrap" : "wrap", overflowX: isMobile ? "auto" : "visible", paddingBottom: isMobile ? "2px" : "0" }}>
+            {[
+              { key: "all",      label: isMobile ? "🎴 Toutes"  : "🎴 Toutes",     color: "#FFD700", active: "#FFD700", activeText: "#0D0D1A", text: "#FFD700" },
+              { key: "owned",    label: isMobile ? "✅ OK"       : "✅ Possédées",  color: "#4CAF50", active: "#4CAF50", activeText: "#fff",    text: "#4CAF50" },
+              { key: "missing",  label: isMobile ? "❌ Manq."    : "❌ Manquantes", color: "#FF5252", active: "#FF5252", activeText: "#fff",    text: "#FF5252" },
+              { key: "wishlist", label: isMobile ? "⭐ Wish"     : "⭐ Wishlist",   color: "#FFC107", active: "#FFC107", activeText: "#000",    text: "#FFC107" },
+            ].map(({ key, label, color, active, activeText, text }) => (
+              <button
+                key={key}
+                onClick={() => onFilterChange(key)}
+                style={{
+                  padding: isMobile ? "6px 10px" : "8px 16px",
+                  background: filterOwned === key ? active : "#16213E",
+                  color: filterOwned === key ? activeText : text,
+                  border: `1px solid ${color}`,
+                  borderRadius: "20px",
+                  cursor: "pointer",
+                  fontSize: isMobile ? "11px" : "12px",
+                  fontWeight: "bold",
+                  transition: "0.15s",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0
+                }}
+              >{label}</button>
+            ))}
           </div>
 
           {/* Panneau Filtres Avancés */}
@@ -1229,7 +1144,7 @@ function CardsView({ selectedSet, cards, owned, search, filterOwned, onBack, onT
         </div>
       </div>
 
-      <div style={{ padding: "30px", maxWidth: "1400px", margin: "0 auto" }}>
+      <div style={{ padding: isMobile ? "10px" : "30px", maxWidth: "1400px", margin: "0 auto" }}>
         {loadingCards ? (
           <div style={{ textAlign: "center", padding: "60px 20px", color: "#888" }}>
             <div style={{ fontSize: "24px", marginBottom: "15px" }}>🔄</div>
