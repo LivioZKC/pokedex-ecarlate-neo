@@ -455,8 +455,8 @@ function GlobalHeader({ totalCards, ownedCards, currentSetName, onExport, onImpo
 }
 
 function CardModal({ card, onClose, onToggle, isOwned, frenchName, notes, onUpdateNote }) {
-  const [isEditingNotes, setIsEditingNotes] = React.useState(false);
-  const [tempNotes, setTempNotes] = React.useState(notes || {});
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [tempNotes, setTempNotes] = useState(notes || {});
   if (!card) return null;
 
   const cardTypesDisplay = card.types ? (
@@ -934,10 +934,10 @@ function CardItem({ card, isOwned, onToggle, onPreview, setId, owned }) {
 }
 
 function CardsView({ selectedSet, cards, owned, search, filterOwned, onBack, onToggle, onPreview, loadingCards, onSearchChange, onFilterChange, frenchNames }) {
-  const [filterType, setFilterType] = React.useState("all");
-  const [filterRarity, setFilterRarity] = React.useState("all");
-  const [sortBy, setSortBy] = React.useState("number");
-  const [showAdvancedFilters, setShowAdvancedFilters] = React.useState(false);
+  const [filterType, setFilterType] = useState("all");
+  const [filterRarity, setFilterRarity] = useState("all");
+  const [sortBy, setSortBy] = useState("number");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const setId = selectedSet.id;
   const ownedInSet = owned[setId] || {};
