@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pokémon Card Registry</title>
+  <title>Pokédex Écarlate</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -26,191 +28,10 @@
       width: 100%;
       min-height: 100%;
     }
-
-    /* Login Page Styles */
-    #login-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100vh;
-      background: linear-gradient(135deg, #0D0D1A 0%, #16213E 100%);
-    }
-
-    #login-container.hidden {
-      display: none;
-    }
-
-    .login-box {
-      background: #1A1A2E;
-      border: 2px solid #FFD700;
-      border-radius: 12px;
-      padding: 40px;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2);
-    }
-
-    .login-box h1 {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 36px;
-      color: #FFD700;
-      margin-bottom: 10px;
-      letter-spacing: 2px;
-      text-align: center;
-    }
-
-    .login-box p {
-      color: #888;
-      text-align: center;
-      margin-bottom: 30px;
-      font-size: 14px;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-group label {
-      display: block;
-      color: #F0F0F0;
-      margin-bottom: 8px;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 12px;
-      background: #0D0D1A;
-      border: 1px solid #FFD700;
-      border-radius: 6px;
-      color: #F0F0F0;
-      font-size: 14px;
-      transition: all 0.3s;
-    }
-
-    .form-group input:focus {
-      outline: none;
-      border-color: #FFD700;
-      box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
-    }
-
-    .login-box button {
-      width: 100%;
-      padding: 12px;
-      background: #FFD700;
-      border: none;
-      border-radius: 6px;
-      color: #0D0D1A;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .login-box button:hover {
-      background: #FFF200;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
-    }
-
-    .login-box button:active {
-      transform: translateY(0);
-    }
-
-    .error-message {
-      color: #FF5252;
-      font-size: 13px;
-      margin-top: 10px;
-      text-align: center;
-      display: none;
-    }
-
-    .error-message.show {
-      display: block;
-    }
   </style>
 </head>
 <body>
-  <!-- Login Page -->
-  <div id="login-container">
-    <div class="login-box">
-      <h1>POKÉDEX</h1>
-      <p>Écarlate Neo — Collection Privée</p>
-      <form id="login-form">
-        <div class="form-group">
-          <label for="username">Pseudo</label>
-          <input type="text" id="username" name="username" required autofocus>
-        </div>
-        <div class="form-group">
-          <label for="password">Mot de passe</label>
-          <input type="password" id="password" name="password" required>
-        </div>
-        <button type="submit">Accès</button>
-        <div class="error-message" id="error-msg"></div>
-      </form>
-    </div>
-  </div>
-
-  <!-- App -->
   <div id="root"></div>
-
-  <!-- Authentication Script -->
-  <script>
-    const CORRECT_USERNAME = "Ecarlate";
-    const CORRECT_PASSWORD = "neo-05022015";
-    const SESSION_KEY = "pokédex-authenticated";
-
-    function checkAuth() {
-      return sessionStorage.getItem(SESSION_KEY) === "true";
-    }
-
-    function hideLogin() {
-      document.getElementById("login-container").classList.add("hidden");
-      document.getElementById("root").style.display = "block";
-    }
-
-    function showError(message) {
-      const errorEl = document.getElementById("error-msg");
-      errorEl.textContent = message;
-      errorEl.classList.add("show");
-    }
-
-    function clearError() {
-      const errorEl = document.getElementById("error-msg");
-      errorEl.classList.remove("show");
-    }
-
-    document.getElementById("login-form").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-
-      if (username === CORRECT_USERNAME && password === CORRECT_PASSWORD) {
-        sessionStorage.setItem(SESSION_KEY, "true");
-        clearError();
-        hideLogin();
-      } else {
-        showError("Pseudo ou mot de passe incorrect");
-        document.getElementById("password").value = "";
-      }
-    });
-
-    // Check if already authenticated
-    document.addEventListener("DOMContentLoaded", function() {
-      if (checkAuth()) {
-        hideLogin();
-      } else {
-        document.getElementById("root").style.display = "none";
-      }
-    });
-  </script>
-
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <script type="text/babel" src="pokemon-registry.jsx"></script>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
